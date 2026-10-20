@@ -1,0 +1,199 @@
+name: Build verified sprite catalog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-sprite-catalog.yml'
+      - 'assets/free-sprites/originals/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pillow
+        run: python -m pip install --quiet pillow
+
+      - name: Build catalog from exact originals
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageFont
+          import hashlib, json, math, csv
+
+          root = Path('assets/free-sprites')
+          originals = root / 'originals' / 'opengameart'
+          out = root / 'catalog'
+          cells_dir = out / 'exact-cells'
+          out.mkdir(parents=True, exist_ok=True)
+          cells_dir.mkdir(parents=True, exist_ok=True)
+
+          sources = [
+              {
+                  'key':'min_ui',
+                  'file': originals/'min-ui-animals-items'/'8x8Uithings_0.png',
+                  'author':'Min',
+                  'license':'CC0',
+                  'source_page':'https://opengameart.org/content/8x8-uianimalsitems',
+                  'grid':'8x8',
+              },
+              {
+                  'key':'min_items',
+                  'file': originals/'min-ui-animals-items'/'8x8Items_0.png',
+                  'author':'Min',
+                  'license':'CC0',
+                  'source_page':'https://opengameart.org/content/8x8-uianimalsitems',
+                  'grid':'8x8',
+              },
+              {
+                  'key':'min_animals',
+                  'file': originals/'min-ui-animals-items'/'8x8animals_0.png',
+                  'author':'Min',
+                  'license':'CC0',
+                  'source_page':'https://opengameart.org/content/8x8-uianimalsitems',
+                  'grid':'8x8',
+              },
+              {
+                  'key':'dezras_equipment',
+                  'file': originals/'dezras-icons-symbols'/'equipment_8x8.png',
+                  'author':'DezrasDragons',
+                  'license':'CC0',
+                  'source_page':'https://opengameart.org/content/8x8-icons-and-symbols',
+                  'grid':'8x8 cells with 1px borders (source format)',
+              },
+              {
+                  'key':'dezras_symbols',
+                  'file': originals/'dezras-icons-symbols'/'symbols_8x8.png',
+                  'author':'DezrasDragons',
+                  'license':'CC0',
+                  'source_page':'https://opengameart.org/content/8x8-icons-and-symbols',
+                  'grid':'8x8 cells with 1px borders (source format)',
+              },
+          ]
+
+          def sha256(path):
+              return hashlib.sha256(path.read_bytes()).hexdigest()
+
+          # Whole-sheet visual catalog, exactly the imported originals, nearest-neighbour enlarged.
+          font = ImageFont.load_default()
+          panels = []
+          for s in sources:
+              im = Image.open(s['file']).convert('RGBA')
+              scale = max(2, min(8, 720 // max(1, im.width)))
+              scaled = im.resize((im.width*scale, im.height*scale), Image.Resampling.NEAREST)
+              w = max(760, scaled.width + 28)
+              h = scaled.height + 76
+              panel = Image.new('RGB', (w,h), (16,16,20))
+              panel.paste(scaled, (14,50), scaled)
+              d = ImageDraw.Draw(panel)
+              d.text((14,10), f"{s['key']} | {s['author']} | {s['license']}", fill=(245,245,245), font=font)
+              d.text((14,26), f"{s['file'].name}  {im.width}x{im.height}  SHA256 {sha256(s['file'])[:16]}...", fill=(180,210,255), font=font)
+              panels.append(panel)
+
+          sheet_w = max(p.width for p in panels)
+          sheet_h = sum(p.height for p in panels) + 12*(len(panels)-1)
+          whole = Image.new('RGB',(sheet_w,sheet_h),(8,8,12))
+          y=0
+          for p in panels:
+              whole.paste(p,(0,y)); y += p.height + 12
+          whole.save(out/'00_IMPORTED_ORIGINALS_CATALOG.png')
+
+          # Extract exact grid-aligned 8x8 cells only from Min's native 8x8 sheets.
+          # IDs are neutral coordinate IDs; no semantic sprite names are guessed.
+          entries=[]
+          for s in sources[:3]:
+              im = Image.open(s['file']).convert('RGBA')
+              # Most common pixel = sheet background; used only to flag visually-empty cells.
+              counts={}
+              for px in im.getdata(): counts[px]=counts.get(px,0)+1
+              bg=max(counts, key=counts.get)
+              cols=im.width//8
+              rows=im.height//8
+              for r in range(rows):
+                  for c in range(cols):
+                      box=(c*8,r*8,c*8+8,r*8+8)
+                      tile=im.crop(box)
+                      pix=list(tile.getdata())
+                      nonblank=any(p != bg for p in pix)
+                      ident=f"{s['key'].upper()}_R{r:02d}_C{c:02d}"
+                      rel=f"exact-cells/{ident}.png"
+                      if nonblank:
+                          tile.save(out/rel)
+                      raw=tile.tobytes()
+                      entries.append({
+                          'id':ident,
+                          'source_key':s['key'],
+                          'source_file':s['file'].name,
+                          'source_page':s['source_page'],
+                          'author':s['author'],
+                          'license':s['license'],
+                          'x':c*8,'y':r*8,'w':8,'h':8,
+                          'row':r,'col':c,
+                          'background_rgba':list(bg),
+                          'nonblank':nonblank,
+                          'exact_cell_png': rel if nonblank else None,
+                          'pixel_sha256': hashlib.sha256(raw).hexdigest(),
+                          'semantic_name': None,
+                          'status':'exact-source-cell-unclassified' if nonblank else 'blank-cell'
+                      })
+
+          manifest={
+              'schema':'prisma.sprite-library.v1',
+              'policy':'No semantic names are assigned until visually verified. Extracted cells are exact 8x8 crops from imported originals.',
+              'sources':[{**s, 'file':str(s['file']), 'sha256':sha256(s['file']), 'dimensions':list(Image.open(s['file']).size)} for s in sources],
+              'cells':entries
+          }
+          (out/'library.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+
+          # CSV for easy database review.
+          with (out/'library.csv').open('w',newline='',encoding='utf-8') as f:
+              wr=csv.DictWriter(f,fieldnames=['id','source_key','source_file','author','license','x','y','row','col','nonblank','pixel_sha256','semantic_name','status'])
+              wr.writeheader()
+              for e in entries: wr.writerow({k:e[k] for k in wr.fieldnames})
+
+          # Contact sheet of all nonblank exact cells with coordinate IDs.
+          cells=[e for e in entries if e['nonblank']]
+          tile_scale=8
+          cell_w=150; cell_h=92; ncols=5
+          nrows=max(1,math.ceil(len(cells)/ncols))
+          cat=Image.new('RGB',(ncols*cell_w,nrows*cell_h),(12,12,16))
+          d=ImageDraw.Draw(cat)
+          for i,e in enumerate(cells):
+              x=(i%ncols)*cell_w; y=(i//ncols)*cell_h
+              tile=Image.open(out/e['exact_cell_png']).convert('RGBA').resize((64,64),Image.Resampling.NEAREST)
+              # checker/dark backdrop for transparent sprites
+              cat.paste((30,30,36),(x+6,y+6,x+70,y+70))
+              cat.paste(tile,(x+6,y+6),tile)
+              d.text((x+75,y+10),e['id'],fill=(245,245,245),font=font)
+              d.text((x+75,y+28),f"xy {e['x']},{e['y']}",fill=(160,210,255),font=font)
+              d.text((x+75,y+44),e['source_key'],fill=(255,210,80),font=font)
+              d.text((x+75,y+60),'UNCLASSIFIED',fill=(255,140,180),font=font)
+          cat.save(out/'01_MIN_EXACT_8X8_CELLS.png')
+
+          readme='''# PRISMA verified sprite catalog\n\nThis directory is generated only from the exact imported CC0 originals.\n\n- `00_IMPORTED_ORIGINALS_CATALOG.png`: enlarged view of every imported source sheet.\n- `01_MIN_EXACT_8X8_CELLS.png`: every nonblank 8x8 cell extracted from Min's native 8x8 sheets.\n- `exact-cells/`: exact crops, not redrawn.\n- `library.json` / `library.csv`: provenance, source coordinates and hashes.\n\n**Important:** cells intentionally start without semantic names. A name is added only after visual verification against the source. This avoids inventing what a sprite represents.\n'''
+          (out/'README.md').write_text(readme,encoding='utf-8')
+          print('Catalog entries:',len(entries),'nonblank:',len(cells))
+          PY
+
+      - name: Commit generated catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- assets/free-sprites/catalog && [ -z "$(git status --porcelain -- assets/free-sprites/catalog)" ]; then
+            echo 'No catalog changes to commit.'
+            exit 0
+          fi
+          git config user.name 'PRISMA Catalog Builder'
+          git config user.email 'actions@users.noreply.github.com'
+          git add assets/free-sprites/catalog
+          git commit -m 'Build exact-source sprite catalog from imported CC0 assets'
+          git push

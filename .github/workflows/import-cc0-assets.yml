@@ -1,0 +1,86 @@
+name: Import verified CC0 sprite assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/import-cc0-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download exact verified originals
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/free-sprites/originals/opengameart/min-ui-animals-items
+          mkdir -p assets/free-sprites/originals/opengameart/dezras-icons-symbols
+
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://opengameart.org/sites/default/files/8x8Uithings_0.png' \
+            -o assets/free-sprites/originals/opengameart/min-ui-animals-items/8x8Uithings_0.png
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://opengameart.org/sites/default/files/8x8Items_0.png' \
+            -o assets/free-sprites/originals/opengameart/min-ui-animals-items/8x8Items_0.png
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://opengameart.org/sites/default/files/8x8animals_0.png' \
+            -o assets/free-sprites/originals/opengameart/min-ui-animals-items/8x8animals_0.png
+
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://opengameart.org/sites/default/files/equipment_8x8.png' \
+            -o assets/free-sprites/originals/opengameart/dezras-icons-symbols/equipment_8x8.png
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://opengameart.org/sites/default/files/symbols_8x8.png' \
+            -o assets/free-sprites/originals/opengameart/dezras-icons-symbols/symbols_8x8.png
+
+          sha256sum \
+            assets/free-sprites/originals/opengameart/min-ui-animals-items/*.png \
+            assets/free-sprites/originals/opengameart/dezras-icons-symbols/*.png \
+            > assets/free-sprites/originals/SHA256SUMS.txt
+
+          cat > assets/free-sprites/originals/README.md <<'EOF'
+          # Verified external originals
+
+          These files are stored unchanged from their verified source URLs.
+
+          ## Min — 8x8 UI/Animals/Items
+          - Source: https://opengameart.org/content/8x8-uianimalsitems
+          - License: CC0
+          - Files: `8x8Uithings_0.png`, `8x8Items_0.png`, `8x8animals_0.png`
+
+          ## DezrasDragons — 8x8 Icons and Symbols
+          - Source: https://opengameart.org/content/8x8-icons-and-symbols
+          - License: CC0
+          - Files: `equipment_8x8.png`, `symbols_8x8.png`
+
+          No artwork in this folder is redrawn or approximated by PRISMA.
+          EOF
+
+      - name: Validate downloaded file types
+        shell: bash
+        run: |
+          set -euo pipefail
+          file assets/free-sprites/originals/opengameart/min-ui-animals-items/*.png
+          file assets/free-sprites/originals/opengameart/dezras-icons-symbols/*.png
+
+      - name: Commit imported originals
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- assets/free-sprites/originals && [ -z "$(git status --porcelain -- assets/free-sprites/originals)" ]; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'PRISMA Asset Importer'
+          git config user.email 'actions@users.noreply.github.com'
+          git add assets/free-sprites/originals
+          git commit -m 'Import verified CC0 8x8 sprite originals'
+          git push

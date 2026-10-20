@@ -23,6 +23,8 @@ jobs:
           set -euo pipefail
           mkdir -p assets/free-sprites/originals/opengameart/min-ui-animals-items
           mkdir -p assets/free-sprites/originals/opengameart/dezras-icons-symbols
+          mkdir -p assets/free-sprites/originals/opengameart/nats-8x8-ui-pack
+          mkdir -p assets/free-sprites/originals/opengameart/nats-8x8-starter-pack
 
           curl -fL --retry 3 --retry-delay 2 \
             'https://opengameart.org/sites/default/files/8x8Uithings_0.png' \
@@ -41,15 +43,33 @@ jobs:
             'https://opengameart.org/sites/default/files/symbols_8x8.png' \
             -o assets/free-sprites/originals/opengameart/dezras-icons-symbols/symbols_8x8.png
 
-          sha256sum \
-            assets/free-sprites/originals/opengameart/min-ui-animals-items/*.png \
-            assets/free-sprites/originals/opengameart/dezras-icons-symbols/*.png \
+          # Nat's 8x8 UI Pack — OpenGameArt page publishes Nat's8x8UIPack.zip (CC0).
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://opengameart.org/sites/default/files/Nat%27s8x8UIPack.zip' \
+            -o assets/free-sprites/originals/opengameart/nats-8x8-ui-pack/Nats8x8UIPack.zip
+          rm -rf assets/free-sprites/originals/opengameart/nats-8x8-ui-pack/extracted
+          mkdir -p assets/free-sprites/originals/opengameart/nats-8x8-ui-pack/extracted
+          unzip -q -o assets/free-sprites/originals/opengameart/nats-8x8-ui-pack/Nats8x8UIPack.zip \
+            -d assets/free-sprites/originals/opengameart/nats-8x8-ui-pack/extracted
+
+          # Nat's 8x8 Starter Pack — OpenGameArt publishes Nateonus8x8PixelPack.zip (CC0).
+          curl -fL --retry 3 --retry-delay 2 \
+            'https://opengameart.org/sites/default/files/Nateonus8x8PixelPack.zip' \
+            -o assets/free-sprites/originals/opengameart/nats-8x8-starter-pack/Nateonus8x8PixelPack.zip
+          rm -rf assets/free-sprites/originals/opengameart/nats-8x8-starter-pack/extracted
+          mkdir -p assets/free-sprites/originals/opengameart/nats-8x8-starter-pack/extracted
+          unzip -q -o assets/free-sprites/originals/opengameart/nats-8x8-starter-pack/Nateonus8x8PixelPack.zip \
+            -d assets/free-sprites/originals/opengameart/nats-8x8-starter-pack/extracted
+
+          find assets/free-sprites/originals -type f ! -name SHA256SUMS.txt -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
             > assets/free-sprites/originals/SHA256SUMS.txt
 
           cat > assets/free-sprites/originals/README.md <<'EOF'
           # Verified external originals
 
-          These files are stored unchanged from their verified source URLs.
+          Files in this tree are downloaded from the exact source assets and are preserved unchanged. ZIP packs are also retained alongside their extracted contents.
 
           ## Min — 8x8 UI/Animals/Items
           - Source: https://opengameart.org/content/8x8-uianimalsitems
@@ -61,6 +81,18 @@ jobs:
           - License: CC0
           - Files: `equipment_8x8.png`, `symbols_8x8.png`
 
+          ## nateonus — Nat's 8x8 UI Pack
+          - Source: https://opengameart.org/content/nats-8x8-ui-pack-over-50-ui-elements
+          - License: CC0
+          - Published archive: `Nat's8x8UIPack.zip`
+          - Stored as: `nats-8x8-ui-pack/Nats8x8UIPack.zip` plus exact extracted contents.
+
+          ## nateonus — Nat's 8x8 Starter Pack
+          - Source: https://opengameart.org/node/111169
+          - License: CC0
+          - Published archive: `Nateonus8x8PixelPack.zip`
+          - Stored as: `nats-8x8-starter-pack/Nateonus8x8PixelPack.zip` plus exact extracted contents.
+
           No artwork in this folder is redrawn or approximated by PRISMA.
           EOF
 
@@ -70,6 +102,8 @@ jobs:
           set -euo pipefail
           file assets/free-sprites/originals/opengameart/min-ui-animals-items/*.png
           file assets/free-sprites/originals/opengameart/dezras-icons-symbols/*.png
+          file assets/free-sprites/originals/opengameart/nats-8x8-ui-pack/Nats8x8UIPack.zip
+          file assets/free-sprites/originals/opengameart/nats-8x8-starter-pack/Nateonus8x8PixelPack.zip
 
       - name: Commit imported originals
         shell: bash
@@ -82,5 +116,5 @@ jobs:
           git config user.name 'PRISMA Asset Importer'
           git config user.email 'actions@users.noreply.github.com'
           git add assets/free-sprites/originals
-          git commit -m 'Import verified CC0 8x8 sprite originals'
+          git commit -m 'Import additional verified CC0 8x8 sprite packs'
           git push

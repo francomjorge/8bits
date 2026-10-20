@@ -1,17 +1,10 @@
 # 8bits
 
-Repositorio de trabajo para PRISMA / NES: instrumento audiovisual 8-bit, investigación de arquitectura clásica, assets libres, mockups, ROMs y documentación.
+Repositorio de investigación y prototipos retro para PRISMA.
 
-## Estructura inicial
+## PRISMA
 
-- `docs/` — análisis técnico y decisiones de arquitectura.
-- `assets/free-sprites/` — fuentes libres/CC0 y selección de sprites.
-- `assets/mockups/` — mockups de interfaz.
-- `roms/` — builds de prueba cuando se incorporen al repo.
+- NES / bancos APU y assets retro
+- PlayStation 1 / rama `projects/prisma/ps1`
 
-## Prioridad actual
-
-1. Core NES estable: NMI/vblank, input seguro, OAM shadow, VRAM queue y dirty flags.
-2. Interfaz de un módulo con controles visuales reales.
-3. Biblioteca de sprites libres fáciles de reducir a CHR NES.
-4. Luego escalar a cuatro módulos audiovisuales.
+La rama PS1 usa PSn00bSDK y construye imágenes de CD `.bin/.cue` mediante GitHub Actions.

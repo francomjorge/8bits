@@ -35,3 +35,5 @@ The committed `night.png` is converted during the build to standard Sony 24-bit 
 - `V5-BANK` — PRISMA-PI patch/sample bank
 
 The CI artifact names stay short: `V1-NIGHT.bin`, `V1-NIGHT.cue`, `V1-NIGHT.exe`.
+
+Build validation branch: `ps1-build-v1`.

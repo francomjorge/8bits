@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-v1-night:
+  build-v1-boot:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +18,7 @@ jobs:
       - name: Install host tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y unzip ninja-build python3-pil
+          sudo apt-get install -y unzip ninja-build
 
       - name: Download official PSn00bSDK v0.24 toolchain
         run: |
@@ -34,7 +34,7 @@ jobs:
           unzip -q /tmp/gcc-mipsel.zip -d "$HOME/ps1/gcc"
           unzip -q /tmp/psn00bsdk.zip -d "$HOME/ps1/sdk"
 
-      - name: Resolve SDK paths
+      - name: Resolve official SDK paths
         shell: bash
         run: |
           GCC="$(find "$HOME/ps1/gcc" -type f -name mipsel-none-elf-gcc | head -1)"
@@ -50,45 +50,31 @@ jobs:
           echo "SDK_CMAKE=$SDK_CMAKE" >> "$GITHUB_ENV"
           echo "PSN00BSDK_LIBS=$(dirname "$(dirname "$SDK_CMAKE")")" >> "$GITHUB_ENV"
 
-      - name: Build native TIM asset
-        run: |
-          python3 \
-            projects/prisma/ps1/V1-NIGHT/png2tim24.py \
-            projects/prisma/ps1/V1-NIGHT/night.png \
-            projects/prisma/ps1/V1-NIGHT/night.tim
-
-          ls -lh projects/prisma/ps1/V1-NIGHT/night.tim
-
-      - name: Build V1-NIGHT from PSn00bSDK
+      - name: Build V1-BOOT from PSn00bSDK hello
         run: |
           cmake \
-            -S projects/prisma/ps1/V1-NIGHT \
-            -B build/V1-NIGHT \
+            -S projects/prisma/ps1/V1-BOOT \
+            -B build/V1-BOOT \
             -G Ninja \
             -DCMAKE_TOOLCHAIN_FILE="$SDK_CMAKE"
 
-          cmake --build build/V1-NIGHT
+          cmake --build build/V1-BOOT
+          find build/V1-BOOT -maxdepth 2 -type f -printf '%p %s bytes\n' | sort
 
       - name: Prepare short artifact names
         shell: bash
         run: |
-          mkdir -p dist/V1-NIGHT
+          mkdir -p dist/V1-BOOT
+          cp build/V1-BOOT/v1boot.exe dist/V1-BOOT/V1-BOOT.exe
+          cp build/V1-BOOT/v1boot.bin dist/V1-BOOT/V1-BOOT.bin
+          sed 's/v1boot\.bin/V1-BOOT.bin/g' \
+            build/V1-BOOT/v1boot.cue \
+            > dist/V1-BOOT/V1-BOOT.cue
+          ls -lh dist/V1-BOOT
 
-          cp build/V1-NIGHT/v1night.exe dist/V1-NIGHT/V1-NIGHT.exe
-          cp build/V1-NIGHT/v1night.bin dist/V1-NIGHT/V1-NIGHT.bin
-
-          sed 's/v1night\.bin/V1-NIGHT.bin/g' \
-            build/V1-NIGHT/v1night.cue \
-            > dist/V1-NIGHT/V1-NIGHT.cue
-
-          cp projects/prisma/ps1/V1-NIGHT/night.png dist/V1-NIGHT/V1-NIGHT.png
-          cp projects/prisma/ps1/V1-NIGHT/README.md dist/V1-NIGHT/README.md
-
-          ls -lh dist/V1-NIGHT
-
-      - name: Upload V1-NIGHT
+      - name: Upload V1-BOOT
         uses: actions/upload-artifact@v4
         with:
-          name: V1-NIGHT
-          path: dist/V1-NIGHT/
+          name: V1-BOOT
+          path: dist/V1-BOOT/
           if-no-files-found: error

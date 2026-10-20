@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<iso_project>
+    <track type="data">
+        <identifiers
+            system          ="PLAYSTATION"
+            volume          ="PRISMAPIV1"
+            volume_set      ="PRISMAPIV1"
+            publisher       ="PRISMA-PI"
+            data_preparer   ="PSN00BSDK ${PSN00BSDK_VERSION}"
+            application     ="PLAYSTATION"
+        />
+
+        <directory_tree>
+            <file name="SYSTEM.CNF"   type="data" source="${PROJECT_SOURCE_DIR}/system.cnf" />
+            <file name="V1NIGHT.EXE"  type="data" source="v1night.exe" />
+
+            <!-- Keep the disc image a few MB from day one, following the
+                 PSn00bSDK cdbrowse example's dummy-sector approach. -->
+            <dummy sectors="1024"/>
+        </directory_tree>
+    </track>
+</iso_project>

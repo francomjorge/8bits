@@ -5,6 +5,10 @@ on:
     paths:
       - "projects/prisma/ps1/**"
       - ".github/workflows/build-prisma-ps1.yml"
+  pull_request:
+    paths:
+      - "projects/prisma/ps1/**"
+      - ".github/workflows/build-prisma-ps1.yml"
   workflow_dispatch:
 
 jobs:
@@ -83,6 +87,7 @@ jobs:
 
           cp projects/prisma/ps1/V1-NIGHT/night.png dist/V1-NIGHT/V1-NIGHT.png
           cp projects/prisma/ps1/V1-NIGHT/README.md dist/V1-NIGHT/README.md
+          sha256sum dist/V1-NIGHT/* > dist/V1-NIGHT/SHA256.txt
 
           ls -lh dist/V1-NIGHT
 

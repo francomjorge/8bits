@@ -1,12 +1,12 @@
-# PRISMA-PI / PlayStation 1 - V1-NIGHT
-# Based directly on PSn00bSDK examples/graphics/rgb24/CMakeLists.txt
+# V1-NIGHT / PRISMA-PI PS1
+# Based on PSn00bSDK beginner/hello + cdrom/cdbrowse build patterns.
 cmake_minimum_required(VERSION 3.21)
 
 project(
-    prisma_pi_v1_night
+    v1night
     LANGUAGES C ASM
     VERSION 1.0.0
-    DESCRIPTION "PRISMA-PI PS1 V1 NIGHT DRIVE"
+    DESCRIPTION "PRISMA-PI PS1 V1 NIGHT"
 )
 
 psn00bsdk_add_executable(v1night GPREL main.c)
@@ -15,9 +15,6 @@ psn00bsdk_add_cd_image(
     v1night_iso v1night iso.xml
     DEPENDS v1night system.cnf
 )
-
-# Same mechanism used by the official rgb24 example.
-psn00bsdk_target_incbin(v1night PRIVATE tim_image night.tim)
 
 install(
     FILES

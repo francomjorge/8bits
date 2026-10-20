@@ -1,0 +1,32 @@
+{
+  "pack": "PRISMA NES UI PACK V1",
+  "tile_size": "8x8",
+  "tile_count": 16,
+  "chr_bytes": 256,
+  "sheet": "prisma_ui_8x8_sheet.png",
+  "palette_roles": {
+    "0": "transparent",
+    "1": "cyan",
+    "2": "magenta",
+    "3": "yellow"
+  },
+  "tiles": [
+    {"index":0,"name":"cursor_left","sheet_x":0,"sheet_y":0},
+    {"index":1,"name":"cursor_right","sheet_x":8,"sheet_y":0},
+    {"index":2,"name":"cursor_up","sheet_x":16,"sheet_y":0},
+    {"index":3,"name":"cursor_down","sheet_x":24,"sheet_y":0},
+    {"index":4,"name":"check","sheet_x":32,"sheet_y":0},
+    {"index":5,"name":"cross","sheet_x":40,"sheet_y":0},
+    {"index":6,"name":"led","sheet_x":48,"sheet_y":0},
+    {"index":7,"name":"bar","sheet_x":56,"sheet_y":0},
+    {"index":8,"name":"star","sheet_x":64,"sheet_y":0},
+    {"index":9,"name":"eye","sheet_x":72,"sheet_y":0},
+    {"index":10,"name":"orb","sheet_x":80,"sheet_y":0},
+    {"index":11,"name":"pulse","sheet_x":88,"sheet_y":0},
+    {"index":12,"name":"triangle","sheet_x":96,"sheet_y":0},
+    {"index":13,"name":"noise","sheet_x":104,"sheet_y":0},
+    {"index":14,"name":"corner","sheet_x":112,"sheet_y":0},
+    {"index":15,"name":"knob","sheet_x":120,"sheet_y":0}
+  ],
+  "note": "Original PRISMA starter glyphs created for the 8bits repository; NES-ready 2bpp CHR. External CC0 references are tracked separately."
+}

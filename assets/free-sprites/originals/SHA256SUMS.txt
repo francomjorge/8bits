@@ -1,0 +1,5 @@
+43b696f777fcfc0d15fbb71ece9fa64ee31ece798960528faf647c8ae9c40fbd  assets/free-sprites/originals/opengameart/min-ui-animals-items/8x8Items_0.png
+290702bc0644184274d87c51c6b818dcdb814df5f5e37bb855306b0048bdc0a0  assets/free-sprites/originals/opengameart/min-ui-animals-items/8x8Uithings_0.png
+20d1c51b730f55fa3067f3d9dc24b2da188d8a74016f35e08a1e14949ee9f0c0  assets/free-sprites/originals/opengameart/min-ui-animals-items/8x8animals_0.png
+444da5ad74e1cb06c2d66809bae7316728e5dc97081b1df974ac0be302ece283  assets/free-sprites/originals/opengameart/dezras-icons-symbols/equipment_8x8.png
+ca05cc8e6c04b4ebc33cff2af396dff1394f60556a65b715c9f5cccba7b52b00  assets/free-sprites/originals/opengameart/dezras-icons-symbols/symbols_8x8.png
